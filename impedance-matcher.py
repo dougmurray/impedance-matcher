@@ -89,16 +89,37 @@ if __name__ == "__main__":
     parser.add_argument("Rs", help="Source impedance (Ohms)", type=float)
     parser.add_argument("Rl", help="Load impedance (Ohms)", type=float)
     parser.add_argument("freq", help="Frequency (Hz)", type=float)
+    parser.add_argument("-r", "--range", action="store_true", help="frequency range")
     args = parser.parse_args()
     R_s = args.Rs
     R_p = args.Rl
     freq = args.freq
 
-    X_s, X_p = matched_Q(freq, R_s, R_p)
-    C_s, L_p = cap_from_impedance(freq, X_s), ind_from_impedance(freq, X_p)
-    L_s, C_p = ind_from_impedance(freq, X_s), cap_from_impedance(freq, X_p)
-    print(f"C_s: {C_s} F, \t L_p: {L_p} H")
-    print("Or")
-    print(f"L_s: {L_s} H, \t C_p: {C_p} F")
+    if args.range:
+        print("Input frequency range in Hz")
+        start_freq = float(input("Start frequency: "))
+        stop_freq = float(input("Stop frequency: "))
+        freq_range = np.linspace(start_freq, stop_freq)
+        X_s, X_p = matched_Q(freq_range, R_s, R_p)
+        C_s, L_p = (
+            cap_from_impedance(freq_range, X_s),
+            ind_from_impedance(freq_range, X_p),
+        )
+        L_s, C_p = (
+            ind_from_impedance(freq_range, X_s),
+            cap_from_impedance(freq_range, X_p),
+        )
+        for i, element in enumerate(freq_range):
+            print(f"{int(element)} Hz: C_s: {C_s[i]} F, \t L_p: {L_p[i]} H")
+        print("Or")
+        for i, element in enumerate(freq_range):
+            print(f"{int(element)} Hz: L_s: {L_s[i]} H, \t C_p: {C_p[i]} F")
+    else:
+        X_s, X_p = matched_Q(freq, R_s, R_p)
+        C_s, L_p = cap_from_impedance(freq, X_s), ind_from_impedance(freq, X_p)
+        L_s, C_p = ind_from_impedance(freq, X_s), cap_from_impedance(freq, X_p)
+        print(f"C_s: {C_s} F, \t L_p: {L_p} H")
+        print("Or")
+        print(f"L_s: {L_s} H, \t C_p: {C_p} F")
 
-    print_schematic(freq, R_s, R_p, C_s, C_p, L_s, L_p)
+        print_schematic(freq, R_s, R_p, C_s, C_p, L_s, L_p)
